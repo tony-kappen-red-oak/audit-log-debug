@@ -6,6 +6,7 @@ from django.apps import apps
 from django.conf import settings
 from django.db.models.signals import pre_save
 from django.utils.deprecation import MiddlewareMixin
+from rest_framework_simplejwt import authentication
 
 from auditlog.models import LogEntry
 
@@ -32,6 +33,23 @@ class AuditlogMiddleware(MiddlewareMixin):
         # In case of proxy, set 'original' address
         if request.META.get('HTTP_X_FORWARDED_FOR'):
             threadlocal.auditlog['remote_addr'] = request.META.get('HTTP_X_FORWARDED_FOR').split(',')[0]
+
+        # --------------------
+        """
+        This line allows the user to be saved with the log entry my manually authenticating the token
+        django-audit-log can't recognize from a DRF request whether a user is authenticated or not
+        so we have to make a manual call to our authenticator - JWTAuthentication.
+        Since middleware runs before the request authentication done by JWTAuthentication, this
+        is the quickfix I came up with.
+        It's in a try catch loop because if the user authenticates the first time, the authenticate
+        function would return an error since the user object doesn't exists yet.
+        Related issue: https://github.com/jazzband/django-auditlog/issues/115
+        """
+        try:
+            request.user = authentication.JWTAuthentication().authenticate(request)[0]
+        except Exception as e:
+            print(e)
+        # --------------------
 
         # Connect signal for automatic logging
         if hasattr(request, 'user') and getattr(request.user, 'is_authenticated', False):
