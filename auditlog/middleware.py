@@ -46,7 +46,9 @@ class AuditlogMiddleware(MiddlewareMixin):
         Related issue: https://github.com/jazzband/django-auditlog/issues/115
         """
         try:
-            request.user = authentication.JWTAuthentication().authenticate(request)[0]
+            user = authentication.JWTAuthentication().authenticate(request)
+            if user:
+                request.user = user[0]
         except Exception as e:
             print(e)
         # --------------------
