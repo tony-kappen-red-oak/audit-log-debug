@@ -113,8 +113,8 @@ class LogEntryManager(models.Manager):
         primary_keys = list(
             queryset.values_list(queryset.model._meta.pk.name, flat=True)
         )
-        print(primary_keys)
         if isinstance(primary_keys[0], int):
+            print(self.filter(content_type=content_type).filter(Q(object_id__in=primary_keys)).distinct())
             return (
                 self.filter(content_type=content_type)
                 .filter(Q(object_id__in=primary_keys))
