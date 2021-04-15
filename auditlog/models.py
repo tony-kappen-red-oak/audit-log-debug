@@ -110,6 +110,7 @@ class LogEntryManager(models.Manager):
             return self.none()
 
         content_type = ContentType.objects.get_for_model(queryset.model)
+        print(content_type)
         primary_keys = list(
             queryset.values_list(queryset.model._meta.pk.name, flat=True)
         )
